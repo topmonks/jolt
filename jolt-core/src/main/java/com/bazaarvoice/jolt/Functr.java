@@ -45,22 +45,85 @@ public class Functr implements SpecDriven, Transform {
                     walk((Map<String, Object>) inputEntry.getValue(), (Map<String, Object>) specValue, model);
                 } else if (specValue instanceof String) {
                     String func = (String) specValue;
-                    if (func != null) {
-                        int lasDot = func.lastIndexOf(".");
-                        String className = func.substring(0, lasDot);
-                        String methodName = func.substring(lasDot + 1);
-                        try {
-                            Class<?> funcClass = Class.forName(className);
-                            Method funcMethod = funcClass.getMethod(methodName, Object.class, Map.class);
-                            Object retval = funcMethod.invoke(null, inputEntry.getValue(), model);
-                            inputEntry.setValue(retval);
-                        } catch (Throwable e) {
-                            throw new SpecException( "Call function error - class '" + className + "' and method with signature 'public static Object " + methodName +"(Object value, Map<String, Object> model)'", e);
-                        }
-                    }
+                    Object result = callFunction(func, inputEntry.getValue(), model, input);
+                    inputEntry.setValue(result);
                 }
             }
         }
+    }
+
+    private Object callFunction(String function, Object value, Map<String, Object> model, Map<String, Object> local) {
+        Func func = new Func(function);
+        Class<?>[] classes = null;
+        try {
+            classes = new Class[func.params.length + 1];
+            for (int i = 0; i < classes.length; i++) {
+                classes[i] = Object.class;
+            }
+            Object[] objects = new Object[func.params.length + 1];
+            objects[0] = value;
+            for (int i = 1; i < objects.length; i++) {
+                String param = func.params[i - 1];
+                String[] extracted = null;
+                Map<String, Object> map = null;
+                if (param.startsWith(".")) {
+                    extracted = param.substring(1).split("\\.");
+                    map = local;
+                } else {
+                    extracted = param.split("\\.");
+                    map = model;
+                }
+                objects[i] = findValue(extracted, map);
+            }
+            Class<?> funcClass = Class.forName(func.className);
+            Method funcMethod = funcClass.getMethod(func.methodName, classes);
+            Object retval = funcMethod.invoke(null, objects);
+            return retval;
+        } catch (Throwable e) {
+            StringBuilder sb = new StringBuilder();
+            for (Class<?> clazz : classes) {
+                if (sb.length() != 0) sb.append(", ");
+                sb.append(clazz.getSimpleName());
+            }
+            throw new SpecException("Call function error - function='" + function + "'\n                                               expected function='" + func.className + "." + func.methodName + "(" + sb.toString() + ")'", e);
+        }
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object findValue(String[] extracted, Map<String, Object> model) {
+        Map<String, Object> m = model;
+        for (int i = 0; i < extracted.length - 1; i++) {
+            String token = extracted[i];
+            m = (Map<String, Object>) m.get(token);
+            if (m == null) throw new SpecException("Wrong param path '" + token + "'");
+        }
+        Object value = m.get(extracted[extracted.length - 1]);
+        if (value == null) throw new SpecException("Wrong param path '" + extracted[extracted.length - 1] + "'");
+        return value;
+    }
+
+    private static class Func {
+        private final String className;
+        private final String methodName;
+        private final String[] params;
+
+        private Func(String function) {
+            String f = function.replaceAll(" ", "");
+            int leftParenthesis = f.indexOf("(");
+            int rightParenthesis = f.indexOf(")");
+            if (leftParenthesis != -1) {
+                String p = f.substring(leftParenthesis + 1, rightParenthesis);
+                params = p.split("\\,");
+                f = f.substring(0, leftParenthesis);
+            } else {
+                params = new String[0];
+            }
+            int lastDot = f.lastIndexOf(".");
+            className = f.substring(0, lastDot);
+            methodName = f.substring(lastDot + 1);
+        }
+
     }
 
 }

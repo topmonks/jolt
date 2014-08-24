@@ -50,7 +50,7 @@ public class FuncTest {
             "{"+
                "\"operation\": \"func\","+
                "\"spec\": {"+
-                   "\"value\": \"com.bazaarvoice.jolt.functr.FuncTest.transform\""+
+                   "\"value\": \"com.bazaarvoice.jolt.functr.FuncTest.transform(.precision)\""+
                "}"+
             "}"+
            "]";
@@ -60,7 +60,7 @@ public class FuncTest {
                "\"operation\": \"func\","+
                "\"spec\": {"+
                  "\"amount\":{" +
-                   "\"value\": \"com.bazaarvoice.jolt.functr.FuncTest.transform\""+
+                   "\"value\": \"com.bazaarvoice.jolt.functr.FuncTest.transform(.precision)\""+
                  "}" +
                "}"+
             "}"+
@@ -157,22 +157,15 @@ public class FuncTest {
         AssertJUnit.assertEquals(123400, value);
     }
     
-    
-    @SuppressWarnings("unchecked")
-    public static Object transform(Object value, Map<String, Object> model){
+    public static Object transform(Object value, Object precision){
         String val = String.valueOf(value);
+        int wantPrec = (Integer) precision;
         int dot = val.indexOf(".");
         int prec = dot == -1 ? prec = 0 : val.length() - 1 - dot;
-        int want = 0;
-        if (model.containsKey("amount")) {
-            want = (Integer) ((Map<String, Object>) model.get("amount")).get("precision");   
-        } else {
-            want = (Integer) model.get("precision");
-        }
-        if (want > prec) {
-            val = val + "000000000000000000000000000000".substring(0, want - prec);
-        } else if (want < prec) {
-            val = val.substring(0, val.length() - (prec - want));
+        if (wantPrec > prec) {
+            val = val + "000000000000000000000000000000".substring(0, wantPrec - prec);
+        } else if (wantPrec < prec) {
+            val = val.substring(0, val.length() - (prec - wantPrec));
         }
         val = val.replaceAll("\\.", "");
         return Integer.valueOf(val);    
