@@ -16,6 +16,7 @@
 package com.bazaarvoice.jolt;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -51,13 +52,35 @@ public class Functr implements SpecDriven, Transform {
         return input;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private void walk(Map<String, Object> input, Map<String, Object> s, Map<String, Object> model) {
         for (Entry<String, Object> inputEntry : input.entrySet()) {
-            if (s.containsKey(inputEntry.getKey())) {
-                Object specValue = s.get(inputEntry.getKey());
-                if (specValue instanceof Map && inputEntry.getValue() instanceof Map) {
-                    walk((Map<String, Object>) inputEntry.getValue(), (Map<String, Object>) specValue, model);
+            String inputKey = inputEntry.getKey();
+            if (inputEntry.getValue() instanceof ArrayList) inputKey += "[]";
+            if (s.containsKey(inputKey)) {
+                Object specValue = s.get(inputKey);
+                if (specValue instanceof Map) {
+                    if (inputEntry.getValue() instanceof Map) {
+                        walk((Map<String, Object>) inputEntry.getValue(), (Map<String, Object>) specValue, model);
+                    } else if (inputEntry.getValue() instanceof ArrayList) {
+                        ArrayList list = (ArrayList) inputEntry.getValue();
+                        Map<String, Object> specMap = (Map<String, Object>) specValue;
+                        for (Entry<String, Object> specEntry : specMap.entrySet()) {
+                            if (specEntry.getKey().equals("*")) {
+                                for (Object map : list) {
+                                    walk((Map<String, Object>) map, (Map<String, Object>) specEntry.getValue(), model);
+                                }
+                            } else {
+                                try {
+                                    Integer index = Integer.parseInt(specEntry.getKey());
+                                    walk((Map<String, Object>) list.get(index), (Map<String, Object>) specEntry.getValue(), model);
+                                } catch (NumberFormatException e) {
+                                    throw new SpecException("In array is allowed only \"*\" or \"[number]\"");
+                                }
+
+                            }
+                        }
+                    }
                 } else if (specValue instanceof String) {
                     String func = (String) specValue;
                     Object result = callFunction(func, inputEntry.getValue(), model, input);
