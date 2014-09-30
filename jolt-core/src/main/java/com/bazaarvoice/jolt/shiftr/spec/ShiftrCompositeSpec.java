@@ -104,20 +104,6 @@ public class ShiftrCompositeSpec extends ShiftrSpec {
         executionStrategy = ExecutionStrategy.determineStrategy( literalChildren, computedChildren );
     }
     
-    public void reset() {
-        super.reset();
-        for (ShiftrSpec shiftrSpec : specialChildren) {
-            shiftrSpec.reset();
-        }
-        for (ShiftrSpec shiftrSpec : computedChildren) {
-            shiftrSpec.reset();
-        }
-        for (ShiftrSpec shiftrSpec : literalChildren.values()) {
-            shiftrSpec.reset();
-        }
-    }
-
-
     /**
      * Recursively walk the spec input tree.
      */

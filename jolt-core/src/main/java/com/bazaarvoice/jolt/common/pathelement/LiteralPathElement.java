@@ -84,7 +84,4 @@ public class LiteralPathElement extends BasePathElement implements MatchablePath
         hashCount++;
     }
 
-    public void resetHashCount() {
-        hashCount = 0;
-    }
 }
