@@ -72,6 +72,12 @@ public abstract class ShiftrSpec {
 
         this.pathElement = (MatchablePathElement) pe;
     }
+    
+    public void reset(){
+        if (pathElement instanceof LiteralPathElement){
+            ((LiteralPathElement) pathElement).resetHashCount();
+        }
+    }
 
     //  once all the shiftr specific logic is extracted.
     public static List<PathElement> parse( String key )  {

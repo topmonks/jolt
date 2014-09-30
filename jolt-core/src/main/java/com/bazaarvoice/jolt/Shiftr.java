@@ -474,6 +474,7 @@ public class Shiftr implements SpecDriven, Transform {
         walkedPath.add( rootLpe );
 
         rootSpec.apply( ROOT_KEY, input, walkedPath, output );
+        rootSpec.reset();
 
         return output.get( ROOT_KEY );
     }
