@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.text.AbstractDocument.LeafElement;
+
 /**
  * A Spec Object represents a single line from the JSON Shiftr Spec.
  *
@@ -71,6 +73,10 @@ public abstract class ShiftrSpec {
         }
 
         this.pathElement = (MatchablePathElement) pe;
+    }
+    
+    public void reset() {
+        if (pathElement instanceof LiteralPathElement) ((LiteralPathElement) pathElement).resetHashCount();
     }
     
     //  once all the shiftr specific logic is extracted.

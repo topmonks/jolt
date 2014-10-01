@@ -25,8 +25,8 @@ public class LiteralPathElement extends BasePathElement implements MatchablePath
 
     private final List<String> subKeys;
 
-    private int hashCount = 0;
-
+    private ThreadLocal<Integer> tlHashCount = new ThreadLocal<Integer>();
+    
     public LiteralPathElement( String key ) {
         super(key);
 
@@ -77,11 +77,20 @@ public class LiteralPathElement extends BasePathElement implements MatchablePath
     }
 
     public int getHashCount() {
+        Integer hashCount = tlHashCount.get();
+        if (hashCount == null) hashCount = 0;
         return hashCount;
     }
 
     public void incrementHashCount() {
+        Integer hashCount = tlHashCount.get();
+        if (hashCount == null) hashCount = 0;
         hashCount++;
+        tlHashCount.set(hashCount);
+    }
+
+    public void resetHashCount() {
+        tlHashCount.set(null);
     }
 
 }
