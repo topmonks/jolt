@@ -17,8 +17,10 @@ package com.bazaarvoice.jolt;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -54,16 +56,17 @@ public class Functr implements SpecDriven, Transform {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void walk(Map<String, Object> input, Map<String, Object> s, Map<String, Object> model) {
-        for (Entry<String, Object> inputEntry : input.entrySet()) {
-            String inputKey = inputEntry.getKey();
-            if (inputEntry.getValue() instanceof ArrayList) inputKey += "[]";
-            if (s.containsKey(inputKey)) {
-                Object specValue = s.get(inputKey);
+        Set<String> keys = new LinkedHashSet<String>(input.keySet());
+        for (String key : keys) {
+            Object inputValue = input.get(key);
+            if (inputValue instanceof ArrayList) key += "[]";
+            if (s.containsKey(key)) {
+                Object specValue = s.get(key);
                 if (specValue instanceof Map) {
-                    if (inputEntry.getValue() instanceof Map) {
-                        walk((Map<String, Object>) inputEntry.getValue(), (Map<String, Object>) specValue, model);
-                    } else if (inputEntry.getValue() instanceof ArrayList) {
-                        ArrayList list = (ArrayList) inputEntry.getValue();
+                    if (inputValue instanceof Map) {
+                        walk((Map<String, Object>) inputValue, (Map<String, Object>) specValue, model);
+                    } else if (inputValue instanceof ArrayList) {
+                        ArrayList list = (ArrayList) inputValue;
                         Map<String, Object> specMap = (Map<String, Object>) specValue;
                         for (Entry<String, Object> specEntry : specMap.entrySet()) {
                             if (specEntry.getKey().equals("*")) {
@@ -77,14 +80,13 @@ public class Functr implements SpecDriven, Transform {
                                 } catch (NumberFormatException e) {
                                     throw new SpecException("In array is allowed only \"*\" or \"[number]\"");
                                 }
-
                             }
                         }
                     }
                 } else if (specValue instanceof String) {
                     String func = (String) specValue;
-                    Object result = callFunction(func, inputEntry.getValue(), model, input);
-                    inputEntry.setValue(result);
+                    Object result = callFunction(func, inputValue, model, input);
+                    input.put(key, result);
                 }
             }
         }
@@ -102,16 +104,22 @@ public class Functr implements SpecDriven, Transform {
             objects[0] = value;
             for (int i = 1; i < objects.length; i++) {
                 String param = func.params[i - 1];
-                String[] extracted = null;
-                Map<String, Object> map = null;
-                if (param.startsWith(".")) {
-                    extracted = param.substring(1).split("\\.");
-                    map = local;
+                if ("#localMap".equalsIgnoreCase(param)) {
+                    objects[i] = local;
+                } else if ("#map".equalsIgnoreCase(param)) {
+                    objects[i] = model;
                 } else {
-                    extracted = param.split("\\.");
-                    map = model;
+                    String[] extracted = null;
+                    Map<String, Object> map = null;
+                    if (param.startsWith(".")) {
+                        extracted = param.substring(1).split("\\.");
+                        map = local;
+                    } else {
+                        extracted = param.split("\\.");
+                        map = model;
+                    }
+                    objects[i] = findValue(extracted, map);
                 }
-                objects[i] = findValue(extracted, map);
             }
             Class<?> funcClass = Class.forName(func.className);
             Method funcMethod = funcClass.getMethod(func.methodName, classes);
