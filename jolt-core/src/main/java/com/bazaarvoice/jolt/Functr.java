@@ -71,7 +71,7 @@ public class Functr implements SpecDriven, Transform {
                         for (Entry<String, Object> specEntry : specMap.entrySet()) {
                             if (specEntry.getKey().equals("*")) {
                                 for (Object map : list) {
-                                    walk((Map<String, Object>) map, (Map<String, Object>) specEntry.getValue(), model);
+                                   if (map instanceof Map) walk((Map<String, Object>) map, (Map<String, Object>) specEntry.getValue(), model);
                                 }
                             } else {
                                 try {

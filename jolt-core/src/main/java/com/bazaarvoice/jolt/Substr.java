@@ -73,7 +73,7 @@ public class Substr implements SpecDriven, Transform {
             } else if (inputValue instanceof ArrayList) {
                 ArrayList list = (ArrayList) inputValue;
                 for (Object map : list) {
-                    walk((Map<String, Object>) map);
+                    if (map instanceof Map) walk((Map<String, Object>) map);
                 }
             } else {
                 String dstName = attrs.get(key);
