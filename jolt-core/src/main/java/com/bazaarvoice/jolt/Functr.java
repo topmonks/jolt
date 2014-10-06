@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Topmonks, s r.o.
+ * Copyright 2014 Topmonks, s r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,17 +93,17 @@ public class Functr implements SpecDriven, Transform {
     }
 
     private Object callFunction(String function, Object value, Map<String, Object> model, Map<String, Object> local) {
-        Func func = new Func(function);
+        FuncParser funcParser = new FuncParser(function);
         Class<?>[] classes = null;
         try {
-            classes = new Class[func.params.length + 1];
+            classes = new Class[funcParser.getParams().length + 1];
             for (int i = 0; i < classes.length; i++) {
                 classes[i] = Object.class;
             }
-            Object[] objects = new Object[func.params.length + 1];
+            Object[] objects = new Object[funcParser.getParams().length + 1];
             objects[0] = value;
             for (int i = 1; i < objects.length; i++) {
-                String param = func.params[i - 1];
+                String param = funcParser.getParams()[i - 1];
                 if ("#localMap".equalsIgnoreCase(param)) {
                     objects[i] = local;
                 } else if ("#map".equalsIgnoreCase(param)) {
@@ -121,8 +121,8 @@ public class Functr implements SpecDriven, Transform {
                     objects[i] = findValue(extracted, map);
                 }
             }
-            Class<?> funcClass = Class.forName(func.className);
-            Method funcMethod = funcClass.getMethod(func.methodName, classes);
+            Class<?> funcClass = Class.forName(funcParser.getClassName());
+            Method funcMethod = funcClass.getMethod(funcParser.getMethodName(), classes);
             Object retval = funcMethod.invoke(null, objects);
             return retval;
         } catch (Throwable e) {
@@ -131,7 +131,7 @@ public class Functr implements SpecDriven, Transform {
                 if (sb.length() != 0) sb.append(", ");
                 sb.append(clazz.getSimpleName());
             }
-            throw new SpecException("Call function error - function='" + function + "'\n                                               expected function='" + func.className + "." + func.methodName + "(" + sb.toString() + ")'", e);
+            throw new SpecException("Call function error - function='" + function + "'\n                                               expected function='" + funcParser.getClassName() + "." + funcParser.getMethodName() + "(" + sb.toString() + ")'", e);
         }
 
     }
@@ -148,28 +148,6 @@ public class Functr implements SpecDriven, Transform {
         if (value == null) throw new SpecException("Wrong param path '" + extracted[extracted.length - 1] + "'");
         return value;
     }
-
-    private static class Func {
-        private final String className;
-        private final String methodName;
-        private final String[] params;
-
-        private Func(String function) {
-            String f = function.replaceAll(" ", "");
-            int leftParenthesis = f.indexOf("(");
-            int rightParenthesis = f.indexOf(")");
-            if (leftParenthesis != -1) {
-                String p = f.substring(leftParenthesis + 1, rightParenthesis);
-                params = p.split("\\,");
-                f = f.substring(0, leftParenthesis);
-            } else {
-                params = new String[0];
-            }
-            int lastDot = f.lastIndexOf(".");
-            className = f.substring(0, lastDot);
-            methodName = f.substring(lastDot + 1);
-        }
-
-    }
+    
 
 }
