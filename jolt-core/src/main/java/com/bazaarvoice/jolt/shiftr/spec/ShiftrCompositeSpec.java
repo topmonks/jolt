@@ -244,6 +244,8 @@ public class ShiftrCompositeSpec extends ShiftrSpec {
                         spec.literalChildren.get( key ).apply( key, subInput, walkedPath, output );
                     }
                 }
+                LiteralPathElement lpe = walkedPath.lastElement();
+                if (lpe != null) lpe.resetHashCount();
             }
             @Override
             void processScalar( ShiftrCompositeSpec spec, String scalarInput, WalkedPath walkedPath, Map<String, Object> output ) {
@@ -278,6 +280,8 @@ public class ShiftrCompositeSpec extends ShiftrSpec {
 
                     applyKeyToComputed( spec.computedChildren, walkedPath, output, subKeyStr, subInput );
                 }
+                LiteralPathElement lpe = walkedPath.lastElement();
+                if (lpe != null) lpe.resetHashCount();
             }
 
             @Override
@@ -309,6 +313,8 @@ public class ShiftrCompositeSpec extends ShiftrSpec {
 
                     applyKeyToLiteralAndComputed( spec, subKeyStr, subInput, walkedPath, output );
                 }
+                LiteralPathElement lpe = walkedPath.lastElement();
+                if (lpe != null) lpe.resetHashCount();
             }
 
             @Override
