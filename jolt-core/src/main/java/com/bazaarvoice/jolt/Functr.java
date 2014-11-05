@@ -16,11 +16,13 @@
 package com.bazaarvoice.jolt;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
@@ -71,7 +73,7 @@ public class Functr implements SpecDriven, Transform {
                         for (Entry<String, Object> specEntry : specMap.entrySet()) {
                             if (specEntry.getKey().equals("*")) {
                                 for (Object map : list) {
-                                   if (map instanceof Map) walk((Map<String, Object>) map, (Map<String, Object>) specEntry.getValue(), model);
+                                    if (map instanceof Map) walk((Map<String, Object>) map, (Map<String, Object>) specEntry.getValue(), model);
                                 }
                             } else {
                                 try {
@@ -109,16 +111,16 @@ public class Functr implements SpecDriven, Transform {
                 } else if ("#map".equalsIgnoreCase(param)) {
                     objects[i] = model;
                 } else {
-                    String[] extracted = null;
+                    String p = null;
                     Map<String, Object> map = null;
                     if (param.startsWith(".")) {
-                        extracted = param.substring(1).split("\\.");
+                        p = param.substring(1);
                         map = local;
                     } else {
-                        extracted = param.split("\\.");
+                        p = param;
                         map = model;
                     }
-                    objects[i] = findValue(extracted, map);
+                    objects[i] = findValue(p, map);
                 }
             }
             Class<?> funcClass = Class.forName(funcParser.getClassName());
@@ -136,18 +138,26 @@ public class Functr implements SpecDriven, Transform {
 
     }
 
-    @SuppressWarnings("unchecked")
-    private Object findValue(String[] extracted, Map<String, Object> model) {
-        Map<String, Object> m = model;
-        for (int i = 0; i < extracted.length - 1; i++) {
-            String token = extracted[i];
-            m = (Map<String, Object>) m.get(token);
-            if (m == null) throw new SpecException("Wrong param path '" + token + "'");
-        }
-        Object value = m.get(extracted[extracted.length - 1]);
-        if (value == null) throw new SpecException("Wrong param path '" + extracted[extracted.length - 1] + "'");
-        return value;
-    }
-    
+    private static Pattern isNumber = Pattern.compile("^[-|+]?[0-9]*\\.?[0-9]*$");
 
+    @SuppressWarnings("unchecked")
+    private Object findValue(String param, Map<String, Object> model) {
+        String p = param.trim();
+        if (isNumber.matcher(p).find()) {
+            return new BigDecimal(p);
+        } else if (p.startsWith("'") && p.endsWith("'")) {
+            return p.substring(1, p.length() - 1);
+        } else {
+            Map<String, Object> m = model;
+            String[] extracted = p.split("\\.");
+            for (int i = 0; i < extracted.length - 1; i++) {
+                String token = extracted[i];
+                m = (Map<String, Object>) m.get(token);
+                if (m == null) throw new SpecException("Wrong param '" + p + "' token='" + token + "'");
+            }
+            Object value = m.get(extracted[extracted.length - 1]);
+            if (value == null) throw new SpecException("Wrong param '" + p + "' token='" + extracted[extracted.length - 1] + "'");
+            return value;
+        }
+    }
 }
