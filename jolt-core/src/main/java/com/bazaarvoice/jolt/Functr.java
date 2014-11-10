@@ -58,37 +58,39 @@ public class Functr implements SpecDriven, Transform {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void walk(Map<String, Object> input, Map<String, Object> s, Map<String, Object> model) {
-        Set<String> keys = new LinkedHashSet<String>(input.keySet());
-        for (String key : keys) {
-            Object inputValue = input.get(key);
-            if (inputValue instanceof ArrayList) key += "[]";
-            if (s.containsKey(key)) {
-                Object specValue = s.get(key);
-                if (specValue instanceof Map) {
-                    if (inputValue instanceof Map) {
-                        walk((Map<String, Object>) inputValue, (Map<String, Object>) specValue, model);
-                    } else if (inputValue instanceof ArrayList) {
-                        ArrayList list = (ArrayList) inputValue;
-                        Map<String, Object> specMap = (Map<String, Object>) specValue;
-                        for (Entry<String, Object> specEntry : specMap.entrySet()) {
-                            if (specEntry.getKey().equals("*")) {
-                                for (Object map : list) {
-                                    if (map instanceof Map) walk((Map<String, Object>) map, (Map<String, Object>) specEntry.getValue(), model);
-                                }
-                            } else {
-                                try {
-                                    Integer index = Integer.parseInt(specEntry.getKey());
-                                    walk((Map<String, Object>) list.get(index), (Map<String, Object>) specEntry.getValue(), model);
-                                } catch (NumberFormatException e) {
-                                    throw new SpecException("In array is allowed only \"*\" or \"[number]\"");
+        if (input != null) {
+            Set<String> keys = new LinkedHashSet<String>(input.keySet());
+            for (String key : keys) {
+                Object inputValue = input.get(key);
+                if (inputValue instanceof ArrayList) key += "[]";
+                if (s.containsKey(key)) {
+                    Object specValue = s.get(key);
+                    if (specValue instanceof Map) {
+                        if (inputValue instanceof Map) {
+                            walk((Map<String, Object>) inputValue, (Map<String, Object>) specValue, model);
+                        } else if (inputValue instanceof ArrayList) {
+                            ArrayList list = (ArrayList) inputValue;
+                            Map<String, Object> specMap = (Map<String, Object>) specValue;
+                            for (Entry<String, Object> specEntry : specMap.entrySet()) {
+                                if (specEntry.getKey().equals("*")) {
+                                    for (Object map : list) {
+                                        if (map instanceof Map) walk((Map<String, Object>) map, (Map<String, Object>) specEntry.getValue(), model);
+                                    }
+                                } else {
+                                    try {
+                                        Integer index = Integer.parseInt(specEntry.getKey());
+                                        walk((Map<String, Object>) list.get(index), (Map<String, Object>) specEntry.getValue(), model);
+                                    } catch (NumberFormatException e) {
+                                        throw new SpecException("In array is allowed only \"*\" or \"[number]\"");
+                                    }
                                 }
                             }
                         }
+                    } else if (specValue instanceof String) {
+                        String func = (String) specValue;
+                        Object result = callFunction(func, inputValue, model, input);
+                        input.put(key, result);
                     }
-                } else if (specValue instanceof String) {
-                    String func = (String) specValue;
-                    Object result = callFunction(func, inputValue, model, input);
-                    input.put(key, result);
                 }
             }
         }

@@ -65,20 +65,22 @@ public class Substr implements SpecDriven, Transform {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void walk(Map<String, Object> input) {
-        Set<String> keys = new LinkedHashSet<String>(input.keySet());
-        for (String key : keys) {
-            Object inputValue = input.get(key);
-            if (inputValue instanceof Map) {
-                walk((Map<String, Object>) inputValue);
-            } else if (inputValue instanceof ArrayList) {
-                ArrayList list = (ArrayList) inputValue;
-                for (Object map : list) {
-                    if (map instanceof Map) walk((Map<String, Object>) map);
-                }
-            } else {
-                String dstName = attrs.get(key);
-                if (dstName != null) {
-                    callFunction(key, dstName, input);
+        if (input != null) {
+            Set<String> keys = new LinkedHashSet<String>(input.keySet());
+            for (String key : keys) {
+                Object inputValue = input.get(key);
+                if (inputValue instanceof Map) {
+                    walk((Map<String, Object>) inputValue);
+                } else if (inputValue instanceof ArrayList) {
+                    ArrayList list = (ArrayList) inputValue;
+                    for (Object map : list) {
+                        if (map instanceof Map) walk((Map<String, Object>) map);
+                    }
+                } else {
+                    String dstName = attrs.get(key);
+                    if (dstName != null) {
+                        callFunction(key, dstName, input);
+                    }
                 }
             }
         }
