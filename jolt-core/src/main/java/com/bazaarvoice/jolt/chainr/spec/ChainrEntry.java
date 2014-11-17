@@ -15,6 +15,10 @@
  */
 package com.bazaarvoice.jolt.chainr.spec;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.bazaarvoice.jolt.CardinalityTransform;
 import com.bazaarvoice.jolt.Chainr;
 import com.bazaarvoice.jolt.Defaultr;
@@ -24,13 +28,8 @@ import com.bazaarvoice.jolt.Removr;
 import com.bazaarvoice.jolt.Shiftr;
 import com.bazaarvoice.jolt.Sortr;
 import com.bazaarvoice.jolt.SpecDriven;
-import com.bazaarvoice.jolt.Substr;
 import com.bazaarvoice.jolt.exception.SpecException;
 import com.bazaarvoice.jolt.utils.StringTools;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Helper class that encapsulates the information one of the individual transform entries in
@@ -50,7 +49,6 @@ public class ChainrEntry {
         temp.put( "sort", Sortr.class.getCanonicalName() );
         temp.put( "cardinality", CardinalityTransform.class.getCanonicalName() );
         temp.put( "func", Functr.class.getCanonicalName() );
-        temp.put( "subs", Substr.class.getCanonicalName() );
         STOCK_TRANSFORMS = Collections.unmodifiableMap( temp );
     }
 

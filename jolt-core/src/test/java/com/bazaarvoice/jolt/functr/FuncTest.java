@@ -15,12 +15,15 @@
  */
 package com.bazaarvoice.jolt.functr;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import com.bazaarvoice.jolt.Chainr;
+import com.bazaarvoice.jolt.Functr;
 import com.bazaarvoice.jolt.JsonUtils;
 
 /**
@@ -81,6 +84,30 @@ public class FuncTest {
             "}"+
            "]";   
     
+    private String inputArray1 = "[ [\"neco\",\"tady\",\"je\"] ]";
+    private String specArray1 = "["+ 
+            "{"+
+               "\"operation\": \"func\","+
+               "\"spec\": {"+
+                 "\"*\":{" +
+                   "\"*\": \"com.bazaarvoice.jolt.functr.FuncTest.test\""+
+                 "}" +
+               "}"+
+            "}"+
+           "]";
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testInputArray1(){
+        Object spec = JsonUtils.jsonToList(specArray1);
+        Chainr chainr = Chainr.fromSpec(spec);
+        Object input = JsonUtils.jsonToObject(inputArray1);
+        List<Object> transformed = (List<Object>) chainr.transform(input);
+        List<Object> subArray = (List<Object>) transformed.get(0);
+        for (Object object : subArray) {
+            AssertJUnit.assertEquals("TEST", object);    
+        }
+    }
     
     
     @SuppressWarnings("unchecked")
@@ -184,6 +211,10 @@ public class FuncTest {
         }
         val = val.replaceAll("\\.", "");
         return Integer.valueOf(val);    
+    }
+    
+    public static Object test(Object value){
+        return "TEST";
     }
     
 }

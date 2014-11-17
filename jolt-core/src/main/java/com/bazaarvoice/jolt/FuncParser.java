@@ -34,6 +34,9 @@ public class FuncParser {
         } else {
             params = new String[0];
         }
+        for (int i = 0; i < params.length; i++) {
+            params[i] = params[i].trim();
+        }
         int lastDot = f.lastIndexOf(".");
         className = f.substring(0, lastDot);
         methodName = f.substring(lastDot + 1);
